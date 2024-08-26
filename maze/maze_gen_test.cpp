@@ -5,6 +5,7 @@
 #include <bitset>
 #include <cassert>
 #include <chrono>
+#include <thread>
 #include <cmath>
 #include <complex>
 #include <cstring>
@@ -245,6 +246,14 @@ void debug_map_print(MAT<u8>& walls, int x, int y) {
     cout << endl;
 }
 
+void print_maze(MAT<str>& cur) {
+    // color for better visualization
+    cout << "\x1b[92m";
+    each(l,cur)
+        printvec(l);
+    cout << endl;
+}
+
 MAT<str> gen_map(int x, int y) {
     int sx, sy, tile_ct;
     // creation
@@ -304,78 +313,37 @@ MAT<str> gen_map(int x, int y) {
     return fin;
 }
 
-// use DSU to find the largest disjoint set
-// using this, iterate through the maze and color out all the tiles belonging to this set
-// this gives all accessible areas in the maze for visualization
-#ifndef DSU
-#define DSU
-struct onion {
-    vi p,h;
-
-    onion(int x, int y) {
-        p = vi(x*y),
-        h = vi(x*y,1);
-        iota(all(p),0);
+int bfs_validation(MAT<str>& cur) {
+    queue<pi> q;
+    q.push({1,1});
+    int ct = 0;
+    while(!q.em) {
+        int x = q.ft.f,
+            y = q.ft.s;
+            cur[x][y] = "\x1b[91m1\x1b[92m";
+            q.pp;
+            ++ct;
+            F0R(i,4) {
+                int nx = x + dir[i].f,
+                    ny = y + dir[i].s;
+                if(cur[nx][ny] == " ")
+                    q.push({nx,ny});
+            }
+        // watch bfs lmao
+        /*
+        print_maze(cur);
+        this_thread::sleep_for(chrono::milliseconds(10));
+        */
     }
-
-    int find(int x) {
-        if(x == p[x]) return x;
-        return p[x] = find(p[x]);
-    }
-
-    // modified not for rank, for most children
-    void join(int x, int y) {
-        int px = p[x], py = p[y];
-        if(px == py) return;
-        if(h[px] >= h[py]) p[py]=px,h[px]+=h[py];
-        else if(h[px] < h[py]) p[px]=py,h[py]+=h[px];
-    }
-
-    bool con(int x, int y) { return find(x) == find(y); }
-};
-// testing dead spaces with DSU
-// setting parent prefers [smaller x], [smaller y]
-// only need 2, 4, where X is the current tile:
-// 1 2 3
-// 4 X 5
-// 6 7 8
-void DSU_test(MAT<str>& fin, int fx, int fy) {
-    int n = fx*fy;
-    onion O(fx,fy);
-    FOR(i,1,fx-1) {
-        FOR(j,1,fy-1) {
-            int cur = i+(j*fx);
-            pi u = {i,j-1};
-            pi l = {i-1,j};
-            pi d = {i,j+1};
-            pi r = {i+1,j};
-            if(fin[u.f][u.s] == " ") O.join(u.f+(u.s*fx),cur);
-            if(fin[l.f][l.s] == " ") O.join(l.f+(l.s*fx),cur);
-            if(fin[d.f][d.s] == " ") O.join(cur,d.f+(d.s*fx));
-            if(fin[r.f][r.s] == " ") O.join(cur,r.f+(r.s*fx));
-        }
-    }
-    int mx = -1, idx = -1;
-    F0R(i,n) {
-        if(O.h[i] > mx)
-            mx = O.h[i], idx = i;
-    }
-    F0R(i,fx) {
-        F0R(j,fy) {
-            int c = i+(j*fx);
-            if(O.find(c) == idx)
-                fin[i][j] = "\033[48;5;201m0\33[0m";
-        }
-    }
+    return ct;
 }
-#endif
 
 int main() {
     // seeding for rand
     // srand(7);
     srand(time(0));
     for(int i = 10; i <= 50; i += 10) {
-        FOR(j,1,11) {
+        FOR(j,0,10) {
             str file_path = "test_mazes/" + to_string(i) + "/" + to_string(j) + ".txt";
             // output to file
             // open in trunc mode to delete all previous contents
@@ -388,7 +356,18 @@ int main() {
                 output << cur_line + "\n";
             }
             output.close();
+            int true_ct = 0, test_ct, time;
+            each(l,cur_maze)
+                each(c,l)
+                    true_ct += (c == " ");
+            // validation + timing:
+            auto start = chrono::high_resolution_clock::now();
+            test_ct = bfs_validation(cur_maze);
+            auto end = chrono::high_resolution_clock::now();
+            chrono::duration<double,milli> duration = end - start;
+            cout << (true_ct == test_ct ? "\x1b[92m" : "\x1b[91m1") + file_path + " ----------------- " << (int)duration.count() << "ms\n";
         }
+        cout << endl;
     }
     // main ret
     return 0;
