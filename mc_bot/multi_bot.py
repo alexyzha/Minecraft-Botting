@@ -11,7 +11,7 @@ vec3 = require("vec3")
 
 # bot creation param
 server_host = "localhost"
-server_port = 64657
+server_port = 55560
 
 # auto reconnect
 reconnect = True
@@ -117,15 +117,25 @@ class BOT:
                         self.bot.chat("Air")
                 # stack up (creative)
                 elif "stack" in message:
-                    blocks = int(message.split()[-1])
+                    blocks, x, y, z = message.split(" ")[-4:]
+                    blocks = int(blocks)
+                    # look down
                     pitch = -math.pi / 2
                     yaw = self.bot.entity.yaw
                     self.bot.look(yaw, pitch, True)
-                    for _ in range(blocks):
-                        self.bot.setControlState("jump",True)
-                        self.bot.setControlState("jump",False)
-                        self.bot.clickWindow(0,1,0)
-                        time.sleep(0.5)  # wait half a second
+                    # number of stacks
+                    for _ in range(1,blocks+1):
+                        block = self.bot.blockAtCursor()
+                        up_face = vec3(0,1,0)
+                        if block:
+                            #self.bot.setControlState("jump",True)
+                            #self.bot.setControlState("jump",False)
+                            #time.sleep(0.3)
+                            self.bot.creative.flyTo(vec3(float(x)+0.5,float(y)+0.05+float(_),float(z)+0.5))
+                            time.sleep(0.3)
+                            #self.bot.dig(block,up_face)
+                            self.bot.placeBlock(block,up_face)
+                            #time.sleep(0.5)
 
         # disconnect
         @On(self.bot,"end")

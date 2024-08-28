@@ -209,23 +209,23 @@ void clean_path(stack<pi>& walk, MAT<u8>& walls) {
         switch(key) {
             // where current is above previous
             case(2):
-                walls[cx][cy] &= 0b11111110; // ~0x1
-                walls[px][py] &= 0b11111011; // ~0x4
+                walls[cx][cy] &= 0xfe; // ~0x1
+                walls[px][py] &= 0xfb; // ~0x4
                 break;
             // where previous is to the left of current
             case(1):
-                walls[cx][cy] &= 0b11110111; // ~0x8
-                walls[px][py] &= 0b11111101; // ~0x2
+                walls[cx][cy] &= 0xf7; // ~0x8
+                walls[px][py] &= 0xfd; // ~0x2
                 break;
             // where previous is to the right of current
             case(-1):
-                walls[cx][cy] &= 0b11111101; // ~0x2
-                walls[px][py] &= 0b11110111; // ~0x8
+                walls[cx][cy] &= 0xfd; // ~0x2
+                walls[px][py] &= 0xf7; // ~0x8
                 break;
             // where previous is above current
             case(-2):
-                walls[cx][cy] &= 0b11111011; // ~0x4
-                walls[px][py] &= 0b11111110; // ~0x1
+                walls[cx][cy] &= 0xfb; // ~0x4
+                walls[px][py] &= 0xfe; // ~0x1
                 break;
         }
         // set previous to cur
